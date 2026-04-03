@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^1.48.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "openai": "^6.33.0",
     "pdf-parse-new": "^2.0.0",
     "postcss": "^8.5.8",
     "radix-ui": "^1.4.3",

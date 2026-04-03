@@ -31,15 +31,50 @@ export default function Example() {
 	};
 
 	//Function that send the input to the backend
+	// Function that sends the input to the backend
 	const handleGenerateExam = async () => {
 		if (!file) return;
 
 		setIsGenerating(true);
 
 		try {
-			console.log("Generating...");
-		} catch {
-			alert("Error");
+			console.log("Uploading file and generating exam...");
+
+			// 1. Pack the file into a FormData object
+			const formData = new FormData();
+			// The string "pdf" here MUST match what your backend expects: formData.get("pdf")
+			formData.append("pdf", file);
+
+			// 2. Make the POST request to your Next.js API route
+			const response = await fetch("/api/generate", {
+				method: "POST",
+				body: formData,
+				// Note: Do NOT manually set the 'Content-Type' header to 'multipart/form-data'.
+				// The browser automatically sets it and adds the correct boundary string when you pass FormData.
+			});
+
+			// 3. Check if the server crashed or rejected the request
+			if (!response.ok) {
+				throw new Error(`Server responded with status: ${response.status}`);
+			}
+
+			// 4. Parse the JSON returned from the backend
+			const data = await response.json();
+
+			// 5. Handle the successful AI generation
+			if (data.success) {
+				console.log("Exam Data:", data.exam);
+
+				alert("Exam generated successfully!");
+			} else {
+				throw new Error(data.error || "Failed to generate exam structure.");
+			}
+		} catch (error) {
+			// 6. Provide a more useful error catch
+			console.error("Exam generation failed:", error);
+			alert(
+				"An error occurred while generating the exam. Please check the console.",
+			);
 		} finally {
 			setIsGenerating(false);
 		}
