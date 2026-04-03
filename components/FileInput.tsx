@@ -5,8 +5,8 @@ export default function Example() {
 	const [file, setFile] = useState<File | null>(null);
 
 	// 2. Handle standard click-to-upload
-	const handleFileChange = (e) => {
-		const file = e.target.files[0];
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0] || null;
 		if (file && file.type === "application/pdf") {
 			setFile(file);
 		} else {
@@ -15,11 +15,11 @@ export default function Example() {
 	};
 
 	// 3. Handle drag-and-drop
-	const handleDragOver = (e) => {
+	const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
 		e.preventDefault(); // Prevents the browser from opening the file in a new tab
 	};
 
-	const handleDrop = (e) => {
+	const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
 		e.preventDefault();
 		const file = e.dataTransfer.files[0];
 		if (file && file.type === "application/pdf") {
