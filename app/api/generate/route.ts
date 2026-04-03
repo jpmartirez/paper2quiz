@@ -39,6 +39,7 @@ export async function POST(request: Request) {
                     "id": 1,
                     "question": "The text of the question",
                     "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+                    "answer" : ["Answer for that question"]
                 }
             ]
 

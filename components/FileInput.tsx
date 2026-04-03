@@ -1,11 +1,18 @@
+"use client";
 import Image from "next/image";
 import React, { useState } from "react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import ExamPDF, { Question } from "./ExamPDF";
 
-export default function Example() {
+export default function FileInput() {
 	const [file, setFile] = useState<File | null>(null);
 	const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-	// 2. Handle standard click-to-upload
+	// NEW STATES: For holding the generated exam and controlling the modal
+	const [examData, setExamData] = useState<Question[] | null>(null);
+	const [showModal, setShowModal] = useState<boolean>(false);
+
+	// 1. Handle standard click-to-upload
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0] || null;
 		if (file && file.type === "application/pdf") {
@@ -15,14 +22,14 @@ export default function Example() {
 		}
 	};
 
-	// 3. Handle drag-and-drop
+	// 2. Handle drag-and-drop
 	const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
-		e.preventDefault(); // Prevents the browser from opening the file in a new tab
+		e.preventDefault();
 	};
 
 	const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
 		e.preventDefault();
-		const file = e.dataTransfer.files[0];
+		const file = e.dataTransfer.files?.[0] || null;
 		if (file && file.type === "application/pdf") {
 			setFile(file);
 		} else {
@@ -30,47 +37,40 @@ export default function Example() {
 		}
 	};
 
-	//Function that send the input to the backend
-	// Function that sends the input to the backend
+	// 3. Send the input to the backend
 	const handleGenerateExam = async () => {
 		if (!file) return;
 
 		setIsGenerating(true);
+		setExamData(null); // Reset old data if generating again
 
 		try {
 			console.log("Uploading file and generating exam...");
 
-			// 1. Pack the file into a FormData object
 			const formData = new FormData();
-			// The string "pdf" here MUST match what your backend expects: formData.get("pdf")
 			formData.append("pdf", file);
 
-			// 2. Make the POST request to your Next.js API route
 			const response = await fetch("/api/generate", {
 				method: "POST",
 				body: formData,
-				// Note: Do NOT manually set the 'Content-Type' header to 'multipart/form-data'.
-				// The browser automatically sets it and adds the correct boundary string when you pass FormData.
 			});
 
-			// 3. Check if the server crashed or rejected the request
 			if (!response.ok) {
 				throw new Error(`Server responded with status: ${response.status}`);
 			}
 
-			// 4. Parse the JSON returned from the backend
 			const data = await response.json();
 
-			// 5. Handle the successful AI generation
 			if (data.success) {
 				console.log("Exam Data:", data.exam);
 
-				alert("Exam generated successfully!");
+				// Save the data and trigger the modal!
+				setExamData(data.exam);
+				setShowModal(true);
 			} else {
 				throw new Error(data.error || "Failed to generate exam structure.");
 			}
 		} catch (error) {
-			// 6. Provide a more useful error catch
 			console.error("Exam generation failed:", error);
 			alert(
 				"An error occurred while generating the exam. Please check the console.",
@@ -80,13 +80,20 @@ export default function Example() {
 		}
 	};
 
+	// Helper to completely reset the UI
+	const handleStartOver = () => {
+		setFile(null);
+		setExamData(null);
+		setShowModal(false);
+	};
+
 	return (
-		<div className="flex flex-col gap-5 w-full">
+		<div className="flex flex-col gap-5 w-full relative">
 			<label
 				onDragOver={handleDragOver}
 				onDrop={handleDrop}
 				htmlFor="fileInput"
-				className="border w-full bg-white rounded-lg text-sm border-indigo-600/60 p-8 flex flex-col items-center gap-4  cursor-pointer hover:border-indigo-500 transition"
+				className="border w-full bg-white rounded-lg text-sm border-indigo-600/60 p-8 flex flex-col items-center gap-4 cursor-pointer hover:border-indigo-500 transition"
 			>
 				<div className="">
 					{file ? (
@@ -127,14 +134,104 @@ export default function Example() {
 				/>
 			</label>
 
-			{file && (
+			{/* Standard Generate Button (Hides when exam is ready) */}
+			{file && !examData && (
 				<button
-					className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
+					className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
 					disabled={isGenerating}
 					onClick={handleGenerateExam}
 				>
 					{isGenerating ? "Analyzing PDF..." : "Generate Exam"}
 				</button>
+			)}
+
+			{/* Button to reopen modal if user closed it but didn't start over */}
+			{file && examData && !showModal && (
+				<div className="flex gap-4 mt-6">
+					<button
+						onClick={() => setShowModal(true)}
+						className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition"
+					>
+						View Download Options
+					</button>
+					<button
+						onClick={handleStartOver}
+						className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition"
+					>
+						Start Over
+					</button>
+				</div>
+			)}
+
+			{/* THE POP-UP MODAL */}
+			{showModal && examData && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+					{/* Modal Content Box */}
+					<div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative flex flex-col items-center">
+						{/* Close (X) Button */}
+						<button
+							onClick={() => setShowModal(false)}
+							className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"
+						>
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<line x1="18" y1="6" x2="6" y2="18"></line>
+								<line x1="6" y1="6" x2="18" y2="18"></line>
+							</svg>
+						</button>
+
+						{/* Success Icon */}
+						<div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-600">
+							<svg
+								width="32"
+								height="32"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="3"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<polyline points="20 6 9 17 4 12"></polyline>
+							</svg>
+						</div>
+
+						<h2 className="text-2xl font-bold text-gray-800 mb-2">
+							Exam Ready!
+						</h2>
+						<p className="text-gray-500 text-center mb-8">
+							Your PDF has been successfully converted into a {examData.length}
+							-question multiple choice exam.
+						</p>
+
+						{/* PDF Download Link */}
+						<PDFDownloadLink
+							document={<ExamPDF examData={examData} />}
+							fileName={`${file?.name.replace(".pdf", "")}_Exam.pdf`}
+							className="w-full text-center bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
+						>
+							{({ loading }) =>
+								loading ? "Formatting Document..." : "Download PDF"
+							}
+						</PDFDownloadLink>
+
+						{/* Start Over Text Button */}
+						<button
+							onClick={handleStartOver}
+							className="mt-4 text-sm text-gray-400 hover:text-gray-600 font-medium underline underline-offset-2"
+						>
+							Generate another exam
+						</button>
+					</div>
+				</div>
 			)}
 		</div>
 	);
