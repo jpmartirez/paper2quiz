@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 export default function Example() {
 	const [file, setFile] = useState<File | null>(null);
+	const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
 	// 2. Handle standard click-to-upload
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,6 +27,21 @@ export default function Example() {
 			setFile(file);
 		} else {
 			alert("Please upload a valid PDF file.");
+		}
+	};
+
+	//Function that send the input to the backend
+	const handleGenerateExam = async () => {
+		if (!file) return;
+
+		setIsGenerating(true);
+
+		try {
+			console.log("Generating...");
+		} catch {
+			alert("Error");
+		} finally {
+			setIsGenerating(false);
 		}
 	};
 
@@ -77,8 +93,12 @@ export default function Example() {
 			</label>
 
 			{file && (
-				<button className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
-					Generate Exam
+				<button
+					className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition"
+					disabled={isGenerating}
+					onClick={handleGenerateExam}
+				>
+					{isGenerating ? "Analyzing PDF..." : "Generate Exam"}
 				</button>
 			)}
 		</div>
