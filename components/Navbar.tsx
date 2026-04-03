@@ -70,7 +70,7 @@ const Navbar = () => {
 
 			<div className="flex items-center gap-2 md:pr-1">
 				<button className="hidden md:inline-block bg-violet-600 hover:bg-violet-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition cursor-pointer">
-					Get Template
+					Login
 				</button>
 
 				<button
