@@ -1,3 +1,4 @@
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import React, { useState } from "react";
 
@@ -22,13 +23,6 @@ const Navbar = () => {
 					className="text-gray-600 hover:text-gray-700 text-sm"
 				>
 					Homepage
-				</a>
-				<a
-					href="#"
-					onClick={() => setMobileOpen(false)}
-					className="text-gray-600 hover:text-gray-700 text-sm"
-				>
-					About
 				</a>
 				<a
 					href="#"
@@ -69,9 +63,16 @@ const Navbar = () => {
 			</div>
 
 			<div className="flex items-center gap-2 md:pr-1">
-				<button className="hidden md:inline-block bg-violet-600 hover:bg-violet-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition cursor-pointer">
-					Login
-				</button>
+				<Show when="signed-out">
+					<SignInButton mode="modal">
+						<button className="hidden md:inline-block bg-violet-600 hover:bg-violet-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm transition cursor-pointer">
+							Login
+						</button>
+					</SignInButton>
+				</Show>
+				<Show when="signed-in">
+					<UserButton />
+				</Show>
 
 				<button
 					id="open-menu"
