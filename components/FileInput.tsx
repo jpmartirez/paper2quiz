@@ -2,9 +2,12 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import ExamPDF, { Question } from "./ExamPDF";
 
 export default function FileInput() {
+	const { isSignedIn } = useAuth();
+	const { openSignIn } = useClerk();
 	const [file, setFile] = useState<File | null>(null);
 	const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -39,6 +42,11 @@ export default function FileInput() {
 
 	// 3. Send the input to the backend
 	const handleGenerateExam = async () => {
+		if (!isSignedIn) {
+			await openSignIn();
+			return;
+		}
+
 		if (!file) return;
 
 		setIsGenerating(true);
